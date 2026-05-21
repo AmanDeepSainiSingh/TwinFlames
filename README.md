@@ -1,22 +1,25 @@
-# twinflames 🌸💙
+# twinflames
 
-A personalized job hunt dashboard for Arsh. Pulls live openings from Job Bank Canada around Woodstock, ON, filters for entry-level roles she's actually qualified for (no degrees or certifications required), and gives her one-tap access to Indeed and LinkedIn searches.
-
-Built with love by Greeky.
+A personalized job hunt dashboard. Pulls live openings from Job Bank Canada around Woodstock, ON, filters for entry-level roles, scores best fits, and shows prep tips per category.
 
 ---
 
-## What it does
+## What's in v2 (fixes for v1 issues)
 
-- Fetches Job Bank Canada listings every hour for: Woodstock, Ingersoll, Tavistock, Beachville, Norwich, Innerkip
-- Filters out jobs requiring RN/RPN, degrees, senior roles, trades licences, etc.
-- Tags jobs into Healthcare, Retail/Cafe, Admin, or Other
-- Lets Arsh save jobs locally (stored in her browser)
-- One-click smart search URLs for Indeed and LinkedIn
+- **Titles parse cleanly** (no more concatenated badge text)
+- **Strict location filtering** (no more Winnipeg or BC results bleeding in)
+- **Refresh button** in the status bar, bypasses the cache
+- **Update timestamp** shows date + time, not just time
+- **Best fit scoring**: top 3-5 matches get a ★ Great fit badge based on a profile heuristic
+- **Show requirements** button per job, lazy-loads from a second endpoint
+- **What to prep** button per job, shows tailored tips by category
+- **Cleaned footer** for privacy on a public URL
+- **More cities**: added Embro, Princeton, plus broader Oxford County coverage
+- **80 jobs cap** per fetch instead of 60
 
 ---
 
-## Deploy it (free, ~10 minutes)
+## Deploy (free, ~10 min)
 
 ### 1. Push to GitHub
 
@@ -24,62 +27,67 @@ Built with love by Greeky.
 cd twinflames
 git init
 git add .
-git commit -m "twinflames v1, for Arsh"
+git commit -m "twinflames v2"
 git branch -M main
-# create a new repo on github.com first, then:
+# Create a new repo on github.com, then:
 git remote add origin https://github.com/YOUR_USERNAME/twinflames.git
 git push -u origin main
 ```
 
 ### 2. Deploy on Vercel
 
-1. Go to [vercel.com](https://vercel.com) and sign in with your GitHub
-2. Click **Add New → Project**
-3. Pick the `twinflames` repo, click **Import**
-4. Leave all defaults, click **Deploy**
-5. Wait ~1 minute. You'll get a URL like `twinflames-xyz.vercel.app`
+1. [vercel.com](https://vercel.com) → sign in with GitHub
+2. **Add New → Project** → pick the `twinflames` repo
+3. Leave defaults → **Deploy**
+4. ~1 min later you'll have a `*.vercel.app` URL
 
-### 3. Customize the URL (optional)
+### 3. Tidy the URL (optional)
 
-In your Vercel project → **Settings → Domains**, you can change the subdomain to something cleaner like `twinflames.vercel.app` (if available) or `arsh-jobs.vercel.app`.
-
-That's it. Share the URL with Arsh.
+Project → **Settings → Domains** → change subdomain. Try `twinflames.vercel.app` or `arsh-jobs.vercel.app`.
 
 ---
 
-## Local preview
+## File map
 
-You can open `index.html` directly in your browser to see the design. It'll show sample jobs because `/api/jobs` only works when deployed. To test the live backend locally, install the Vercel CLI:
-
-```bash
-npm i -g vercel
-vercel dev
 ```
-
-Then open `http://localhost:3000`.
+twinflames/
+├── index.html              the app frontend
+├── api/
+│   ├── jobs.py             main scraper (Job Bank, all cities)
+│   └── job-details.py      lazy-load endpoint for one job's requirements
+├── requirements.txt
+├── vercel.json
+└── README.md
+```
 
 ---
 
 ## How to tweak it later
 
-| What to change | Where |
-|---|---|
-| Cities included | `api/jobs.py` → `CITIES` list |
-| Jobs to exclude | `api/jobs.py` → `EXCLUDE_PATTERNS` |
-| Category keywords | `api/jobs.py` → `CATEGORY_KEYWORDS` |
-| Greeting / quote | `index.html` → search for "four-leaf clover" |
-| Footer message | `index.html` → search for "tere liye" |
-| Colors | `index.html` → `:root` CSS variables |
+| Change | File | What to look for |
+|---|---|---|
+| Cities included | `api/jobs.py` | `CITIES` and `TARGET_CITIES` |
+| Jobs to exclude | `api/jobs.py` | `EXCLUDE_PATTERNS` |
+| Category keywords | `api/jobs.py` | `CATEGORY_KEYWORDS` |
+| Best-fit scoring | `index.html` | `fitScore()` function |
+| Prep tips text | `index.html` | `PREP_TIPS` object |
+| Greeting / quote | `index.html` | search "four-leaf clover" |
+| Footer | `index.html` | search "built by Greeky" |
+| Colors | `index.html` | `:root` CSS variables |
 
 ---
 
-## Tech stack
+## Why Indeed isn't pulled in directly
 
-- **Frontend**: pure HTML/CSS/JS (no framework, fast)
-- **Backend**: Python serverless function on Vercel (free tier)
-- **Data**: Job Bank Canada public search, scraped server-side
-- **Caching**: 1-hour edge cache on Vercel CDN
+Indeed actively blocks scrapers with CAPTCHAs and IP bans. Reliable scraping requires paid services starting around $49/month. The "Search Indeed ↗" button opens a pre-filled search instead, which is free, reliable, and gets her there in one tap.
 
 ---
 
-🌸
+## Local preview
+
+Open `index.html` directly in a browser to see the design with sample data (the live endpoints only work when deployed). To run with the live endpoints locally:
+
+```bash
+npm i -g vercel
+vercel dev
+```
