@@ -35,6 +35,7 @@
     --blue-800: #2d4f7a;
 
     --gold: #c98c4a;
+    --green: #4a9b6e;
   }
 
   body {
@@ -91,7 +92,7 @@
     animation-delay: 1.3s;
   }
   @keyframes pulse {
-    0%, 100% { transform: scale(1);   opacity: 0.85; }
+    0%, 100% { transform: scale(1); opacity: 0.85; }
     50%      { transform: scale(1.5); opacity: 1; }
   }
   .quote {
@@ -130,11 +131,12 @@
     box-shadow: 0 4px 12px rgba(234, 138, 167, 0.25);
   }
 
-  /* STATUS BAR with refresh */
+  /* STATUS */
   .status-bar {
     display: flex; justify-content: center; align-items: center;
     gap: 10px; font-size: 12px; color: var(--muted);
     margin-bottom: 32px;
+    flex-wrap: wrap;
   }
   .status-dot {
     width: 6px; height: 6px; border-radius: 50%;
@@ -142,13 +144,12 @@
     animation: dotPulse 2s ease-in-out infinite;
   }
   @keyframes dotPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-
   .refresh-btn {
     background: white; border: 1px solid var(--line);
     color: var(--navy-soft); padding: 5px 11px;
     border-radius: 999px; font-size: 11px;
-    font-family: 'Outfit', sans-serif;
-    cursor: pointer; transition: all 0.2s ease;
+    font-family: 'Outfit', sans-serif; cursor: pointer;
+    transition: all 0.2s ease;
     display: inline-flex; align-items: center; gap: 5px;
     letter-spacing: 0.3px;
   }
@@ -160,7 +161,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .refresh-icon { display: inline-block; font-size: 13px; }
 
-  /* JOB CARDS */
+  /* CARDS */
   .job-list { display: flex; flex-direction: column; gap: 14px; }
 
   .job-card {
@@ -215,7 +216,7 @@
     color: var(--navy); margin-bottom: 4px;
     letter-spacing: -0.01em; line-height: 1.25;
   }
-  .job-employer { font-size: 14px; color: var(--navy-soft); margin-bottom: 14px; }
+  .job-employer { font-size: 14px; color: var(--navy-soft); margin-bottom: 12px; }
 
   .job-meta {
     display: flex; flex-wrap: wrap; gap: 14px;
@@ -224,6 +225,7 @@
   }
   .job-meta-item { display: flex; align-items: center; gap: 5px; }
   .job-salary { color: var(--pink-600); font-weight: 500; }
+  .job-distance { color: var(--blue-600); font-weight: 500; }
 
   .job-summary {
     font-size: 13.5px; color: var(--navy-soft);
@@ -262,7 +264,9 @@
     display: inline-flex; align-items: center; gap: 5px;
   }
   .btn-secondary:hover { border-color: var(--pink-300); color: var(--pink-800); }
-  .btn-secondary.active { background: var(--pink-50); border-color: var(--pink-300); color: var(--pink-800); }
+  .btn-secondary.active {
+    background: var(--pink-50); border-color: var(--pink-300); color: var(--pink-800);
+  }
 
   .btn-save {
     background: white; border: 1px solid var(--line);
@@ -272,28 +276,29 @@
     width: 36px; height: 36px;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s ease;
-    margin-left: auto;
   }
   .btn-save:hover { color: var(--pink-600); border-color: var(--pink-300); }
   .btn-save.saved { color: var(--pink-600); border-color: var(--pink-300); background: var(--pink-50); }
 
-  /* Expandable details panel */
+  /* Details panel */
   .details-panel {
     max-height: 0; overflow: hidden;
-    transition: max-height 0.4s ease, margin-top 0.4s ease, padding 0.4s ease;
-    margin-top: 0;
+    transition: max-height 0.5s ease, margin-top 0.4s ease, padding 0.4s ease, opacity 0.3s ease;
+    margin-top: 0; opacity: 0;
   }
   .details-panel.open {
-    max-height: 1500px;
-    margin-top: 16px;
-    padding-top: 16px;
+    max-height: 3000px;
+    margin-top: 18px;
+    padding-top: 18px;
     border-top: 1px solid var(--line);
+    opacity: 1;
   }
   .details-panel h4 {
     font-family: 'Fraunces', serif;
     font-style: italic; font-weight: 500;
-    font-size: 15px; color: var(--navy);
-    margin: 14px 0 8px;
+    font-size: 14px; color: var(--navy);
+    margin: 16px 0 8px;
+    letter-spacing: 0.2px;
   }
   .details-panel h4:first-child { margin-top: 0; }
   .details-panel ul {
@@ -309,17 +314,55 @@
     content: '•'; color: var(--pink-400);
     position: absolute; left: 4px;
   }
-  .details-panel .loading {
-    font-size: 13px; color: var(--muted);
-    font-style: italic;
+  .details-panel p.overview {
+    font-size: 13.5px; color: var(--navy-soft);
+    line-height: 1.7; margin-bottom: 10px;
   }
-  .details-panel .prep-block {
+  .loading-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--muted); font-style: italic;
+  }
+  .loading-dots::after {
+    content: ''; display: inline-block; width: 1em;
+    animation: dots 1.2s steps(4, end) infinite;
+  }
+  @keyframes dots { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%, 100% { content: '...'; } }
+
+  /* Prep notes block */
+  .prep-block {
     background: linear-gradient(135deg, var(--blue-50), var(--pink-50));
-    border-radius: 12px; padding: 14px 16px;
-    margin-top: 8px;
+    border-radius: 14px; padding: 16px 18px;
+    margin-top: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
   }
-  .details-panel .prep-block h4 { margin-top: 0; color: var(--blue-800); }
-  .details-panel .prep-block li::before { color: var(--blue-400); }
+  .prep-block h4 {
+    margin-top: 0;
+    color: var(--blue-800);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .prep-note {
+    display: flex; gap: 10px; margin-bottom: 10px;
+    font-size: 13px; line-height: 1.6;
+    color: var(--navy-soft);
+  }
+  .prep-note:last-child { margin-bottom: 0; }
+  .prep-icon {
+    flex-shrink: 0; width: 20px; height: 20px;
+    border-radius: 50%; font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 2px;
+  }
+  .prep-icon.strength { background: rgba(74, 155, 110, 0.15); color: var(--green); }
+  .prep-icon.tip      { background: var(--blue-100); color: var(--blue-800); }
+  .prep-icon.bring    { background: var(--pink-100); color: var(--pink-800); }
+
+  .grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-top: 4px;
+  }
+  @media (max-width: 540px) {
+    .grid-2 { grid-template-columns: 1fr; gap: 4px; }
+  }
 
   /* STATES */
   .state-msg {
@@ -345,22 +388,15 @@
     font-size: 19px; color: var(--navy-soft);
     margin-bottom: 6px;
   }
-  .external-note {
-    font-size: 12px; color: var(--muted);
-    margin-bottom: 18px;
-  }
-  .external-btns {
-    display: flex; gap: 10px;
-    justify-content: center; flex-wrap: wrap;
-  }
+  .external-note { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+  .external-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .ext-btn {
     background: white; border: 1px solid var(--line);
     padding: 11px 22px; border-radius: 999px;
     font-family: 'Outfit', sans-serif;
     font-size: 13px; color: var(--navy);
     cursor: pointer; text-decoration: none;
-    transition: all 0.2s ease;
-    display: inline-block;
+    transition: all 0.2s ease; display: inline-block;
   }
   .ext-btn:hover {
     border-color: var(--pink-300); color: var(--pink-800);
@@ -369,9 +405,7 @@
   }
 
   /* FOOTER */
-  .footer {
-    margin-top: 56px; text-align: center;
-  }
+  .footer { margin-top: 56px; text-align: center; }
   .footer-divider {
     display: flex; align-items: center; justify-content: center;
     gap: 14px; color: var(--pink-300);
@@ -396,7 +430,6 @@
     .brand { font-size: 11px; letter-spacing: 5px; gap: 12px; }
     .job-card { padding: 20px 20px; }
     .job-title { font-size: 19px; }
-    .status-bar { flex-direction: column; gap: 6px; }
   }
 </style>
 </head>
@@ -456,107 +489,60 @@
 </div>
 
 <script>
-  // ─── Mock fallback used only when /api/jobs isn't reachable (local file:// open) ───
+  // ─── Driving distance from home (320 Mill St, Woodstock) ───
+  const DISTANCES = {
+    'woodstock':  { min: 5,  km: 3 },
+    'ingersoll':  { min: 14, km: 15 },
+    'tavistock':  { min: 22, km: 25 },
+    'beachville': { min: 8,  km: 8 },
+    'norwich':    { min: 18, km: 20 },
+    'innerkip':   { min: 12, km: 12 },
+    'embro':      { min: 17, km: 17 },
+    'princeton':  { min: 16, km: 18 },
+    'bright':     { min: 17, km: 16 },
+    'drumbo':     { min: 22, km: 24 },
+    'oxford':     { min: 12, km: 12 },
+  };
+  function distanceFor(location) {
+    if (!location) return null;
+    const loc = location.toLowerCase();
+    for (const city in DISTANCES) {
+      if (loc.includes(city)) return DISTANCES[city];
+    }
+    return null;
+  }
+
+  // ─── Mock fallback ───
   const MOCK_JOBS = [
     { title: "Sandwich Artist", employer: "Subway", category: "retail-cafe",
       location: "Woodstock (ON)", salary: "$17.20/hr", job_type: "Part-time",
-      posted: "Today", url: "https://www.jobbank.gc.ca/jobsearch",
+      posted: "Today", url: "https://www.jobbank.gc.ca/jobsearch/jobposting/12345678",
       summary: "Prepare and serve food. Cash handling. Customer service." },
     { title: "Medical Office Assistant", employer: "Woodstock Family Medical Centre", category: "healthcare",
       location: "Woodstock (ON)", salary: "$19.50/hr", job_type: "Part-time",
-      posted: "2 days ago", url: "https://www.jobbank.gc.ca/jobsearch",
+      posted: "2 days ago", url: "https://www.jobbank.gc.ca/jobsearch/jobposting/12345679",
       summary: "Greet patients, schedule appointments, manage files. Health science background an asset." },
     { title: "Barista", employer: "Tim Hortons", category: "retail-cafe",
       location: "Woodstock (ON)", salary: "$17.20/hr", job_type: "Part-time",
-      posted: "Today", url: "https://www.jobbank.gc.ca/jobsearch",
+      posted: "Today", url: "https://www.jobbank.gc.ca/jobsearch/jobposting/12345680",
       summary: "Prepare beverages, food prep, customer service, cash handling." },
     { title: "Pharmacy Assistant", employer: "Shoppers Drug Mart", category: "healthcare",
       location: "Ingersoll (ON)", salary: "$18 to $20/hr", job_type: "Part-time",
-      posted: "4 days ago", url: "https://www.jobbank.gc.ca/jobsearch",
+      posted: "4 days ago", url: "https://www.jobbank.gc.ca/jobsearch/jobposting/12345681",
       summary: "Assist pharmacist, restock shelves, customer support, basic dispensing." },
     { title: "Cashier", employer: "Walmart Supercentre", category: "retail-cafe",
       location: "Woodstock (ON)", salary: "$17.20/hr", job_type: "Part-time",
-      posted: "1 day ago", url: "https://www.jobbank.gc.ca/jobsearch",
+      posted: "1 day ago", url: "https://www.jobbank.gc.ca/jobsearch/jobposting/12345682",
       summary: "Operate cash register, customer service, handle returns." },
     { title: "Receptionist", employer: "Oxford Dental Group", category: "admin",
       location: "Woodstock (ON)", salary: "$17.50/hr", job_type: "Full-time",
-      posted: "5 days ago", url: "https://www.jobbank.gc.ca/jobsearch",
+      posted: "5 days ago", url: "https://www.jobbank.gc.ca/jobsearch/jobposting/12345683",
       summary: "Greet patients, schedule, phones, billing assistance." },
     { title: "Sales Associate", employer: "Shoppers Drug Mart", category: "retail-cafe",
       location: "Tavistock (ON)", salary: "$17.20 to $18/hr", job_type: "Part-time",
-      posted: "Today", url: "https://www.jobbank.gc.ca/jobsearch",
+      posted: "Today", url: "https://www.jobbank.gc.ca/jobsearch/jobposting/12345684",
       summary: "Stock shelves, assist customers, light cashier duties." },
   ];
-
-  // ─── Prep tips per category, shown when she expands a job ───
-  const PREP_TIPS = {
-    'healthcare': {
-      mention: [
-        "Your health science studies and why healthcare interests you",
-        "Patient confidentiality awareness (HIPAA/PHIPA basics)",
-        "Comfort with computers and basic medical terminology",
-        "Your school schedule and availability"
-      ],
-      bring: [
-        "Updated resume (1 page)",
-        "Two references with contact info",
-        "Any CPR/First Aid certifications if you have them"
-      ],
-      practice: [
-        "A 30-second 'tell me about yourself' answer",
-        "Why you want to work in healthcare specifically",
-        "An example of staying calm under pressure"
-      ]
-    },
-    'retail-cafe': {
-      mention: [
-        "Your Subway experience (cash handling, food safety, customer service)",
-        "Evening and weekend availability",
-        "Comfort with a fast pace",
-        "Smart Serve if you have it (some places ask)"
-      ],
-      bring: [
-        "Resume (drop it off in person if possible, managers notice)",
-        "References from Subway or school",
-        "Open availability written down"
-      ],
-      practice: [
-        "A short story about a tough customer and how you handled it",
-        "Why this place and not the cafe down the street",
-        "Your school schedule so they can plan shifts"
-      ]
-    },
-    'admin': {
-      mention: [
-        "Your organizational skills and multitasking",
-        "Comfort with email, calendars, and phone calls",
-        "Basic computer skills (Word, Excel, scheduling software)",
-        "Your school schedule"
-      ],
-      bring: [
-        "Resume",
-        "A list of software you're comfortable with",
-        "References"
-      ],
-      practice: [
-        "Speaking clearly and professionally on the phone",
-        "An example of juggling multiple things at once",
-        "Why office work fits you right now"
-      ]
-    },
-    'other': {
-      mention: [
-        "Your reliability and willingness to learn",
-        "School schedule and availability",
-        "Any relevant experience even if it's adjacent"
-      ],
-      bring: ["Resume", "References"],
-      practice: [
-        "Why you want this specific role",
-        "What you bring even without exact experience"
-      ]
-    }
-  };
 
   // ─── State ───
   let allJobs = [];
@@ -569,7 +555,6 @@
   const $filters    = document.getElementById('filters');
   const $refresh    = document.getElementById('refresh-btn');
 
-  // External smart search URLs
   document.getElementById('indeed-btn').href =
     'https://ca.indeed.com/jobs?q=part+time&l=Woodstock%2C+ON&radius=25';
   document.getElementById('linkedin-btn').href =
@@ -603,57 +588,114 @@
     );
   }
 
-  // ─── Best fit scoring based on Arsh's profile ───
+  // ─── Best fit scoring ───
   function fitScore(job) {
     const t = (job.title + ' ' + (job.summary || '') + ' ' + (job.employer || '')).toLowerCase();
     let score = 0;
-
-    // Direct experience match: she's worked at Subway, similar food roles transfer
     if (/sandwich|subway|barista|cashier|food counter|food service|kitchen helper|server\b/.test(t)) score += 30;
-
-    // Health science adjacent (her degree)
     if (/medical office|pharmacy assist|dental|optometr|veterinary assist|clinic|health care aide|patient/.test(t)) score += 28;
-
-    // Entry-level signals
     if (/no experience|will train|training provided|entry[- ]level|student/.test(t)) score += 15;
-
-    // Schedule fit
     if (job.job_type === 'Part-time') score += 10;
-
-    // Proximity bonus
     if ((job.location || '').toLowerCase().includes('woodstock')) score += 8;
-
-    // Freshness
     const p = (job.posted || '').toLowerCase();
     if (p === 'today') score += 5;
     else if (p === 'yesterday') score += 3;
-
     return score;
   }
-
   function markBestFits(jobs) {
     const scored = jobs.map(j => ({ j, s: fitScore(j) }));
     scored.sort((a, b) => b.s - a.s);
-    const topThreshold = Math.min(5, scored.length);
-    const minScoreForFit = 35;
-    const fitIds = new Set();
-    for (let i = 0; i < topThreshold; i++) {
-      if (scored[i].s >= minScoreForFit) fitIds.add(jobId(scored[i].j));
+    const top = Math.min(5, scored.length);
+    const minFit = 35;
+    const ids = new Set();
+    for (let i = 0; i < top; i++) {
+      if (scored[i].s >= minFit) ids.add(jobId(scored[i].j));
     }
-    jobs.forEach(j => { j._bestFit = fitIds.has(jobId(j)); });
+    jobs.forEach(j => { j._bestFit = ids.has(jobId(j)); });
     return jobs;
+  }
+
+  // ─── Generate prep notes from real job requirements ───
+  function generatePrepNotes(details, job) {
+    const notes = [];
+    const reqText = [
+      ...(details.requirements || []),
+      ...(details.experience  || []),
+      ...(details.tasks       || []),
+      ...(details.education   || []),
+      ...(details.work_setting|| []),
+      details.overview || ''
+    ].join(' ').toLowerCase();
+
+    const exp = (details.experience || []).join(' ').toLowerCase();
+    const edu = (details.education  || []).join(' ').toLowerCase();
+    const langs = (details.languages || []).join(' ').toLowerCase();
+
+    // STRENGTHS to lead with (matched against her Subway + health science background)
+    if (/cash|register|pos|point of sale|payment/.test(reqText)) {
+      notes.push({ type: 'strength', text: "Your Subway experience covers cash handling, mention specific moments (counting drawer, processing returns, balancing at end of shift)." });
+    }
+    if (/customer service|customer experience|guest|client/.test(reqText)) {
+      notes.push({ type: 'strength', text: "Lead with concrete Subway customer stories: a tough order you handled, a complaint you turned around, a regular you remember." });
+    }
+    if (/food|hygiene|sanitation|cleanliness|kitchen|prep/.test(reqText)) {
+      notes.push({ type: 'strength', text: "Food safety habits from Subway transfer directly: sanitation, glove changes, temperature checks. Say it plainly." });
+    }
+    if (/fast[- ]paced|busy|rush|high volume|multitask/.test(reqText)) {
+      notes.push({ type: 'strength', text: "Lunch rush at Subway is a fast-paced multitasking story, prep one." });
+    }
+    if (/team|collaborate|coworker/.test(reqText)) {
+      notes.push({ type: 'strength', text: "Mention covering shifts and training new hires at Subway if you've done that." });
+    }
+    if (/medical|patient|clinic|pharmacy|health|hospital/.test(reqText)) {
+      notes.push({ type: 'strength', text: "Mention your health science studies and that you understand patient confidentiality (PHIPA in Ontario)." });
+    }
+    if (/computer|email|microsoft|excel|word|outlook|software|schedul|appointment|booking/.test(reqText)) {
+      notes.push({ type: 'strength', text: "Highlight school assignments done in Word/Excel, comfort with Gmail and Outlook, quick to learn new scheduling software." });
+    }
+    if (/communication|phone|telephone/.test(reqText)) {
+      notes.push({ type: 'strength', text: "Phone confidence comes from customer interaction, mention answering the Subway phone for catering orders if relevant." });
+    }
+
+    // TIPS based on experience/education requirements
+    if (/no experience|will train|training provided/.test(exp) || /no experience|will train/.test(reqText)) {
+      notes.push({ type: 'tip', text: "Training is provided, so focus on reliability, willingness to learn, and your availability around school." });
+    } else if (/(1 year|1\+ year|6 months|less than 2 year|1 to less than)/.test(exp)) {
+      notes.push({ type: 'tip', text: "They want a bit of experience. Frame Subway with specific responsibilities (cash, food prep, opening/closing if you did those)." });
+    } else if (/(2 year|3 year|2\+ year)/.test(exp)) {
+      notes.push({ type: 'tip', text: "They list 2+ years experience. Apply anyway if interested, list every responsibility from Subway and emphasize quick learning." });
+    }
+
+    if (/high school|secondary/.test(edu) && !/no degree|will train/.test(reqText)) {
+      notes.push({ type: 'tip', text: "High school listed as needed, your in-progress health science degree exceeds that." });
+    }
+    if (/smart serve|food handler|food safety certif/.test(reqText)) {
+      notes.push({ type: 'tip', text: "Mentions Smart Serve or Food Handler certification, check if you have it, both are quick online courses (~$35) if you don't." });
+    }
+    if (/cpr|first aid/.test(reqText)) {
+      notes.push({ type: 'tip', text: "CPR/First Aid mentioned, helpful if you have it, otherwise say you're willing to certify." });
+    }
+    if (langs && !langs.includes('english')) {
+      notes.push({ type: 'tip', text: "Listed language: " + (details.languages || []).join(', ') + "." });
+    }
+
+    // BRING (always practical)
+    notes.push({ type: 'bring', text: "Bring a printed resume, two references with phone numbers, and your availability written down." });
+
+    // If still very few notes, add general practice prompt
+    if (notes.length < 4) {
+      notes.push({ type: 'tip', text: "Practice a 30-second self-intro that ties your school path to why this role fits your schedule and goals." });
+    }
+
+    return notes;
   }
 
   // ─── Render ───
   function render() {
     let jobs = allJobs.slice();
-    if (activeFilter === 'saved') {
-      jobs = jobs.filter(j => savedIds.includes(jobId(j)));
-    } else if (activeFilter === 'best-fit') {
-      jobs = jobs.filter(j => j._bestFit);
-    } else if (activeFilter !== 'all') {
-      jobs = jobs.filter(j => j.category === activeFilter);
-    }
+    if (activeFilter === 'saved')         jobs = jobs.filter(j => savedIds.includes(jobId(j)));
+    else if (activeFilter === 'best-fit') jobs = jobs.filter(j => j._bestFit);
+    else if (activeFilter !== 'all')      jobs = jobs.filter(j => j.category === activeFilter);
 
     if (jobs.length === 0) {
       $list.innerHTML = `
@@ -668,8 +710,9 @@
     $list.innerHTML = jobs.map((j, i) => {
       const id = jobId(j);
       const saved = savedIds.includes(id);
+      const dist = distanceFor(j.location);
       return `
-        <div class="job-card ${categoryClass(j.category)}" style="animation-delay:${Math.min(i * 0.05, 0.5)}s" id="card-${id}">
+        <div class="job-card ${categoryClass(j.category)}" style="animation-delay:${Math.min(i * 0.05, 0.5)}s">
           <div class="job-header-row">
             <div class="tag-row">
               <span class="job-tag ${tagClass(j.category)}">${categoryLabel(j.category)}</span>
@@ -681,6 +724,7 @@
           <p class="job-employer">${escapeHtml(j.employer)}</p>
           <div class="job-meta">
             <span class="job-meta-item">📍 ${escapeHtml(j.location)}</span>
+            ${dist ? `<span class="job-meta-item job-distance">🚗 ~${dist.min} min · ${dist.km} km</span>` : ''}
             ${j.salary ? `<span class="job-meta-item job-salary">${escapeHtml(j.salary)}</span>` : ''}
             ${j.job_type ? `<span class="job-meta-item">${escapeHtml(j.job_type)}</span>` : ''}
             ${j.posted ? `<span class="job-meta-item">${escapeHtml(j.posted)}</span>` : ''}
@@ -688,15 +732,13 @@
           ${j.summary ? `<p class="job-summary">${escapeHtml(j.summary)}</p>` : ''}
           <div class="job-actions">
             <a class="btn-apply" href="${j.url}" target="_blank" rel="noopener">Apply on Job Bank ↗</a>
-            <button class="btn-secondary btn-details" data-id="${id}" data-url="${j.url}" data-cat="${j.category}">Show requirements</button>
-            <button class="btn-secondary btn-prep" data-id="${id}" data-cat="${j.category}">💡 What to prep</button>
+            <button class="btn-secondary btn-details" data-id="${id}" data-url="${j.url}" data-job-idx="${i}">View details &amp; prep notes</button>
           </div>
           <div class="details-panel" id="panel-${id}"></div>
         </div>
       `;
     }).join('');
 
-    // Wire up save buttons
     document.querySelectorAll('.btn-save').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.id;
@@ -707,36 +749,48 @@
       });
     });
 
-    // Wire up details (lazy load requirements)
     document.querySelectorAll('.btn-details').forEach(btn => {
-      btn.addEventListener('click', () => showDetails(btn));
-    });
-
-    // Wire up prep tips
-    document.querySelectorAll('.btn-prep').forEach(btn => {
-      btn.addEventListener('click', () => showPrep(btn));
+      btn.addEventListener('click', () => showDetails(btn, jobs[parseInt(btn.dataset.jobIdx, 10)]));
     });
   }
 
-  async function showDetails(btn) {
+  function sectionHtml(title, items) {
+    if (!items || !items.length) return '';
+    return `<h4>${escapeHtml(title)}</h4><ul>${items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`;
+  }
+
+  function prepNotesHtml(notes) {
+    if (!notes.length) return '';
+    return `
+      <div class="prep-block">
+        <h4>💡 Prep notes for Arsh</h4>
+        ${notes.map(n => `
+          <div class="prep-note">
+            <span class="prep-icon ${n.type}">${n.type === 'strength' ? '✓' : n.type === 'bring' ? '★' : '→'}</span>
+            <span>${escapeHtml(n.text)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  async function showDetails(btn, job) {
     const id  = btn.dataset.id;
     const url = btn.dataset.url;
     const panel = document.getElementById('panel-' + id);
     if (!panel) return;
 
-    if (panel.classList.contains('open') && panel.dataset.mode === 'details') {
+    if (panel.classList.contains('open')) {
       panel.classList.remove('open');
       panel.innerHTML = '';
       btn.classList.remove('active');
+      btn.textContent = 'View details & prep notes';
       return;
     }
-    panel.dataset.mode = 'details';
     btn.classList.add('active');
-    // Reset other buttons on this card
-    btn.parentElement.querySelectorAll('.btn-prep').forEach(b => b.classList.remove('active'));
-
+    btn.textContent = 'Hide details';
     panel.classList.add('open');
-    panel.innerHTML = '<div class="loading">loading requirements…</div>';
+    panel.innerHTML = '<div class="loading-row">fetching the full posting<span class="loading-dots"></span></div>';
 
     let d = detailsCache[url];
     if (!d) {
@@ -745,58 +799,48 @@
         d = await resp.json();
         detailsCache[url] = d;
       } catch (err) {
-        panel.innerHTML = `<p class="loading">couldn't load details, try opening the listing directly</p>`;
-        return;
+        d = { error: String(err) };
       }
     }
 
-    let html = '';
-    if (d.overview)               html += `<p style="font-size:13.5px;color:var(--navy-soft);line-height:1.7;margin-bottom:6px">${escapeHtml(d.overview)}</p>`;
-    if (d.requirements?.length)   html += sectionHtml('Requirements', d.requirements);
-    if (d.experience?.length)     html += sectionHtml('Experience', d.experience);
-    if (d.languages?.length)      html += sectionHtml('Languages', d.languages);
-    if (d.tasks?.length)          html += sectionHtml('Main tasks', d.tasks);
-    if (d.benefits?.length)       html += sectionHtml('Benefits', d.benefits);
+    if (d.error || (!d.overview && !d.requirements?.length && !d.tasks?.length && !d.experience?.length)) {
+      panel.innerHTML = `
+        <p class="loading-row">couldn't pull details from this posting, here are general prep notes:</p>
+        ${prepNotesHtml(generatePrepNotes({}, job))}
+      `;
+      return;
+    }
 
-    if (!html) html = '<p class="loading">no extra details listed, the full posting on Job Bank may have more</p>';
+    let html = '';
+    if (d.overview) html += `<p class="overview">${escapeHtml(d.overview)}</p>`;
+
+    // Required-side info
+    const requiredHas = (d.education?.length || d.experience?.length || d.languages?.length || d.requirements?.length);
+    if (requiredHas) {
+      html += '<h4>What it requires</h4>';
+      html += '<div class="grid-2">';
+      html += '<div>';
+      html += sectionHtml('Education', d.education);
+      html += sectionHtml('Experience', d.experience);
+      html += sectionHtml('Languages', d.languages);
+      html += '</div><div>';
+      html += sectionHtml('Skills / requirements', d.requirements);
+      html += '</div></div>';
+    }
+
+    if (d.tasks?.length) html += sectionHtml('What you would do', d.tasks);
+    if (d.work_setting?.length) html += sectionHtml('Work setting', d.work_setting);
+
+    // Tailored prep notes
+    html += prepNotesHtml(generatePrepNotes(d, job));
+
+    if (d.benefits?.length) html += sectionHtml('Benefits', d.benefits);
+    if (d.transportation?.length) html += sectionHtml('Transportation', d.transportation);
+
     panel.innerHTML = html;
   }
 
-  function showPrep(btn) {
-    const id  = btn.dataset.id;
-    const cat = btn.dataset.cat;
-    const panel = document.getElementById('panel-' + id);
-    if (!panel) return;
-
-    if (panel.classList.contains('open') && panel.dataset.mode === 'prep') {
-      panel.classList.remove('open');
-      panel.innerHTML = '';
-      btn.classList.remove('active');
-      return;
-    }
-    panel.dataset.mode = 'prep';
-    btn.classList.add('active');
-    btn.parentElement.querySelectorAll('.btn-details').forEach(b => b.classList.remove('active'));
-
-    const tips = PREP_TIPS[cat] || PREP_TIPS['other'];
-    panel.classList.add('open');
-    panel.innerHTML = `
-      <div class="prep-block">
-        ${sectionHtml('What to mention', tips.mention)}
-        ${sectionHtml('What to bring', tips.bring)}
-        ${sectionHtml('What to practice', tips.practice)}
-      </div>
-    `;
-  }
-
-  function sectionHtml(title, items) {
-    return `
-      <h4>${escapeHtml(title)}</h4>
-      <ul>${items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
-    `;
-  }
-
-  // ─── Filter handling ───
+  // ─── Wire up ───
   $filters.addEventListener('click', e => {
     if (e.target.classList.contains('pill')) {
       document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
@@ -805,15 +849,11 @@
       render();
     }
   });
-
-  // ─── Refresh handling ───
   $refresh.addEventListener('click', () => loadJobs(true));
 
-  // ─── Load jobs ───
   async function loadJobs(forceRefresh = false) {
     $refresh.classList.add('spinning');
     $statusText.textContent = forceRefresh ? 'checking for new jobs…' : 'loading openings…';
-
     try {
       const path = '/api/jobs' + (forceRefresh ? '?refresh=' + Date.now() : '');
       const resp = await fetch(path, { cache: forceRefresh ? 'no-store' : 'default' });

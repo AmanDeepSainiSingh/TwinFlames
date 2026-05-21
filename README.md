@@ -1,49 +1,34 @@
-# twinflames
+# twinflames v3
 
-A personalized job hunt dashboard. Pulls live openings from Job Bank Canada around Woodstock, ON, filters for entry-level roles, scores best fits, and shows prep tips per category.
-
----
-
-## What's in v2 (fixes for v1 issues)
-
-- **Titles parse cleanly** (no more concatenated badge text)
-- **Strict location filtering** (no more Winnipeg or BC results bleeding in)
-- **Refresh button** in the status bar, bypasses the cache
-- **Update timestamp** shows date + time, not just time
-- **Best fit scoring**: top 3-5 matches get a ★ Great fit badge based on a profile heuristic
-- **Show requirements** button per job, lazy-loads from a second endpoint
-- **What to prep** button per job, shows tailored tips by category
-- **Cleaned footer** for privacy on a public URL
-- **More cities**: added Embro, Princeton, plus broader Oxford County coverage
-- **80 jobs cap** per fetch instead of 60
+A personalized job hunt dashboard. Pulls live openings from Job Bank Canada around Woodstock, ON, filters for entry-level roles, scores best fits, shows distance from home, and generates prep notes tailored to each job's actual requirements.
 
 ---
 
-## Deploy (free, ~10 min)
+## v3 fixes
 
-### 1. Push to GitHub
+- **Apply links now go to the actual posting**, not the generic Job Bank search page. URL extraction now uses the link wrapping the title element with strict validation (must contain `jobposting` and a numeric ID), and skips any job we can't deep-link to.
+- **Requirements actually load**. The details endpoint now correctly parses Job Bank's `<dl>/<dt>/<dd>` definition list structure (which is what they actually use), pulling Education, Experience, Languages, Skills, Tasks, and Benefits sections.
+- **Prep notes are now job-specific**. Instead of generic category tips, the app reads the actual requirements and generates targeted advice. If the job mentions "cash handling," it suggests leading with Subway experience. If it mentions "patient confidentiality," it flags her health science background. If it requires Smart Serve, it tells her how to get it.
+- **One consolidated "View details & prep notes" button** per card, instead of two separate buttons. Cleaner UX.
+- **Distance from home** shown on each card based on 320 Mill St, Woodstock. Drive time in minutes and km.
+
+---
+
+## Deploy (free)
 
 ```bash
 cd twinflames
 git init
 git add .
-git commit -m "twinflames v2"
+git commit -m "twinflames v3"
 git branch -M main
-# Create a new repo on github.com, then:
 git remote add origin https://github.com/YOUR_USERNAME/twinflames.git
 git push -u origin main
 ```
 
-### 2. Deploy on Vercel
+Then on vercel.com → **Add New → Project** → pick the repo → **Deploy**.
 
-1. [vercel.com](https://vercel.com) → sign in with GitHub
-2. **Add New → Project** → pick the `twinflames` repo
-3. Leave defaults → **Deploy**
-4. ~1 min later you'll have a `*.vercel.app` URL
-
-### 3. Tidy the URL (optional)
-
-Project → **Settings → Domains** → change subdomain. Try `twinflames.vercel.app` or `arsh-jobs.vercel.app`.
+If you already deployed v1 or v2, just push v3 to the same repo and Vercel auto-redeploys in ~30 seconds.
 
 ---
 
@@ -51,10 +36,10 @@ Project → **Settings → Domains** → change subdomain. Try `twinflames.verce
 
 ```
 twinflames/
-├── index.html              the app frontend
+├── index.html              frontend
 ├── api/
-│   ├── jobs.py             main scraper (Job Bank, all cities)
-│   └── job-details.py      lazy-load endpoint for one job's requirements
+│   ├── jobs.py             main scraper
+│   └── job-details.py      lazy-loaded requirements/details
 ├── requirements.txt
 ├── vercel.json
 └── README.md
@@ -62,32 +47,21 @@ twinflames/
 
 ---
 
-## How to tweak it later
+## Tuning
 
-| Change | File | What to look for |
-|---|---|---|
-| Cities included | `api/jobs.py` | `CITIES` and `TARGET_CITIES` |
-| Jobs to exclude | `api/jobs.py` | `EXCLUDE_PATTERNS` |
-| Category keywords | `api/jobs.py` | `CATEGORY_KEYWORDS` |
-| Best-fit scoring | `index.html` | `fitScore()` function |
-| Prep tips text | `index.html` | `PREP_TIPS` object |
-| Greeting / quote | `index.html` | search "four-leaf clover" |
-| Footer | `index.html` | search "built by Greeky" |
-| Colors | `index.html` | `:root` CSS variables |
-
----
-
-## Why Indeed isn't pulled in directly
-
-Indeed actively blocks scrapers with CAPTCHAs and IP bans. Reliable scraping requires paid services starting around $49/month. The "Search Indeed ↗" button opens a pre-filled search instead, which is free, reliable, and gets her there in one tap.
+| Change | Where |
+|---|---|
+| Cities | `api/jobs.py` → `CITIES` and `TARGET_CITIES` |
+| Exclude rules | `api/jobs.py` → `EXCLUDE_PATTERNS` |
+| Category words | `api/jobs.py` → `CATEGORY_KEYWORDS` |
+| Distance from home | `index.html` → `DISTANCES` (if you move) |
+| Best-fit scoring | `index.html` → `fitScore()` |
+| Prep notes logic | `index.html` → `generatePrepNotes()` |
+| Greeting / quote | `index.html` → search "four-leaf clover" |
+| Footer | `index.html` → search "built by Greeky" |
 
 ---
 
-## Local preview
+## Debugging tip
 
-Open `index.html` directly in a browser to see the design with sample data (the live endpoints only work when deployed). To run with the live endpoints locally:
-
-```bash
-npm i -g vercel
-vercel dev
-```
+If a particular job's "View details" panel shows the generic fallback, open the network tab and look at the `/api/job-details` response. The `_debug_dl_keys` field lists every `<dt>` label found on that posting page, so you can see which labels Job Bank used and add them to the matching logic in `api/job-details.py` if needed.

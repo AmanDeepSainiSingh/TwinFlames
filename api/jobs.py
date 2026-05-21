@@ -1,13 +1,10 @@
 """
-twinflames /api/jobs endpoint
-Scrapes Job Bank Canada for openings near Woodstock, ON.
+twinflames /api/jobs endpoint (v3)
 
-Fixes from v1:
-- Exact class match for title (no more concatenated badge text)
-- Hard post-filter on location (no more Winnipeg/BC results)
-- Better date parsing (handles "May 21, 2026" format)
-- Returns short description snippet for context
-- Supports ?refresh=1 to bypass cache
+Fixes from v2:
+- Bulletproof posting URL extraction (uses link wrapping the title)
+- URL validation: must contain /jobposting/ and a numeric ID
+- More defensive fallbacks
 """
 
 from http.server import BaseHTTPRequestHandler
@@ -20,7 +17,6 @@ import requests
 from bs4 import BeautifulSoup
 
 
-# Cities within roughly 20 minutes of Woodstock, ON
 CITIES = [
     "Woodstock, ON",
     "Ingersoll, ON",
@@ -32,14 +28,12 @@ CITIES = [
     "Princeton, ON",
 ]
 
-# Lowercase city names used to verify each returned job is actually nearby
 TARGET_CITIES = {
     "woodstock", "ingersoll", "tavistock", "beachville",
     "norwich", "innerkip", "embro", "princeton", "bright",
     "oxford", "drumbo",
 }
 
-# Hard exclude: needs credentials Arsh doesn't have
 EXCLUDE_PATTERNS = [
     r"\bregistered nurse\b", r"\brn\b(?!a)", r"\brpn\b", r"\bnurse practitioner\b",
     r"\blicensed practical\b", r"\blpn\b",
@@ -82,12 +76,12 @@ CATEGORY_KEYWORDS = {
 }
 
 
-def is_excluded(title: str, description: str) -> bool:
+def is_excluded(title, description):
     text = (title + " " + description).lower()
     return any(re.search(p, text) for p in EXCLUDE_PATTERNS)
 
 
-def categorize(title: str, description: str) -> str:
+def categorize(title, description):
     text = (title + " " + description).lower()
     for cat, kws in CATEGORY_KEYWORDS.items():
         if any(kw in text for kw in kws):
@@ -95,77 +89,61 @@ def categorize(title: str, description: str) -> str:
     return "other"
 
 
-def location_in_target_area(location: str) -> bool:
-    """Discard jobs that aren't in our Woodstock-area Ontario cities."""
+def location_in_target_area(location):
     if not location:
         return False
     loc = location.lower()
-    # Must mention one of our target cities
     has_city = any(c in loc for c in TARGET_CITIES)
-    # And must be Ontario (Job Bank format is "Woodstock (ON)")
     has_ontario = "(on)" in loc or "ontario" in loc or ", on" in loc
     return has_city and has_ontario
 
 
-def parse_relative_date(date_str: str) -> str:
-    """Turn '2026-05-21' or 'May 21, 2026' into 'Today', 'Yesterday', 'N days ago'."""
+def parse_relative_date(date_str):
     if not date_str:
         return ""
     s = re.sub(r"^Date posted\s*:?\s*", "", date_str, flags=re.I).strip()
-
     posted = None
-    # YYYY-MM-DD
     m = re.search(r"(\d{4})-(\d{2})-(\d{2})", s)
     if m:
         try:
             posted = datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)))
         except ValueError:
             pass
-
-    # "May 21, 2026" style
     if not posted:
-        try:
-            posted = datetime.strptime(s, "%B %d, %Y")
-        except ValueError:
+        for fmt in ("%B %d, %Y", "%b %d, %Y"):
             try:
-                posted = datetime.strptime(s, "%b %d, %Y")
+                posted = datetime.strptime(s, fmt); break
             except ValueError:
                 pass
-
     if posted:
         delta = (datetime.now() - posted).days
         if delta <= 0:   return "Today"
         if delta == 1:   return "Yesterday"
         if delta < 7:    return f"{delta} days ago"
-        weeks = delta // 7
-        if delta < 30:   return f"{weeks} week{'s' if weeks > 1 else ''} ago"
+        if delta < 30:   weeks = delta // 7; return f"{weeks} week{'s' if weeks > 1 else ''} ago"
         return s
-
     return s
 
 
-def clean_salary(s: str) -> str:
-    if not s:
-        return ""
+def clean_text(s):
+    return re.sub(r"\s+", " ", (s or "")).strip()
+
+
+def clean_salary(s):
+    if not s: return ""
     s = re.sub(r"^Salary\s*:?\s*", "", s, flags=re.I).strip()
     s = re.sub(r"\s+", " ", s)
-    # Trim trailing notes like "(to be negotiated)" to keep cards clean
     s = re.sub(r"\s*\(to be negotiated\)\s*", "", s, flags=re.I).strip()
     return s[:80]
 
 
-def clean_location(s: str) -> str:
-    if not s:
-        return ""
+def clean_location(s):
+    if not s: return ""
     s = re.sub(r"^Location\s*:?\s*", "", s, flags=re.I).strip()
     return re.sub(r"\s+", " ", s)[:60]
 
 
-def clean_text(s: str) -> str:
-    return re.sub(r"\s+", " ", (s or "")).strip()
-
-
-def detect_job_type(blob: str) -> str:
+def detect_job_type(blob):
     b = blob.lower()
     if "part time" in b or "part-time" in b: return "Part-time"
     if "full time" in b or "full-time" in b: return "Full-time"
@@ -174,8 +152,43 @@ def detect_job_type(blob: str) -> str:
     return ""
 
 
-def scrape_city(city: str, page_size: int = 50) -> list:
-    """Fetch and parse one city's worth of Job Bank search results."""
+def find_posting_url(art, title_el):
+    """
+    Find the URL to the specific job posting, NOT the search page.
+
+    Strategy:
+    1. Find the link wrapping the title (most reliable on Job Bank)
+    2. Fall back to any link in the article matching the posting URL pattern
+    3. Validate the URL contains 'jobposting' and a numeric ID
+    """
+    candidates = []
+
+    # Strategy 1: parent link of the title element
+    if title_el:
+        p = title_el.find_parent("a")
+        if p and p.get("href"):
+            candidates.append(p.get("href"))
+
+    # Strategy 2: links matching common Job Bank posting patterns
+    for link in art.find_all("a", href=True):
+        href = link.get("href", "")
+        if "jobposting" in href or re.search(r"/\d{6,}", href):
+            candidates.append(href)
+
+    # Pick the first valid one (contains jobposting AND a numeric ID)
+    for href in candidates:
+        if "jobposting" in href and re.search(r"\d{6,}", href):
+            return ("https://www.jobbank.gc.ca" + href) if href.startswith("/") else href
+
+    # Last resort: first candidate even if not perfect
+    if candidates:
+        href = candidates[0]
+        return ("https://www.jobbank.gc.ca" + href) if href.startswith("/") else href
+
+    return ""
+
+
+def scrape_city(city, page_size=50):
     url = (
         "https://www.jobbank.gc.ca/jobsearch/jobsearch"
         f"?searchstring=&locationstring={quote(city)}&sort=M&fage=14&page=1"
@@ -200,51 +213,37 @@ def scrape_city(city: str, page_size: int = 50) -> list:
     articles = soup.find_all("article")
 
     for art in articles[:page_size]:
-        link_el = art.find("a", href=re.compile(r"/jobsearch/jobposting/"))
-        if not link_el:
-            continue
-
-        # ── Title: EXACT class match, not regex (fix for v1 bug) ──
         title_el = art.find(class_="noctitle")
         title = clean_text(title_el.get_text() if title_el else "")
         if not title:
             continue
 
-        # Employer
+        # CRITICAL: must get a real posting URL, not the search page
+        apply_url = find_posting_url(art, title_el)
+        if not apply_url or "jobposting" not in apply_url:
+            continue  # Skip jobs we can't deep-link to
+
         emp_el = art.find(class_="business")
         employer = clean_text(emp_el.get_text() if emp_el else "")
-        # Strip "Employer:" prefix and screen-reader text
         employer = re.sub(r"^Employer\s*:?\s*", "", employer, flags=re.I).strip()
 
-        # Location
         loc_el = art.find(class_="location")
         location = clean_location(loc_el.get_text(" ") if loc_el else "")
-
-        # Hard location filter (fix for v1 Winnipeg/BC bug)
         if not location_in_target_area(location):
             continue
 
-        # Salary
         sal_el = art.find(class_="salary")
         salary = clean_salary(sal_el.get_text(" ") if sal_el else "")
 
-        # Date
         date_el = art.find(class_="date")
         date_str = parse_relative_date(date_el.get_text() if date_el else "")
 
-        # Short summary snippet (used for category + filter, also shown in card)
         summary_el = art.find(class_="summary") or art.find("p")
         summary = clean_text(summary_el.get_text() if summary_el else "")[:240]
 
-        # Full text blob for filtering
         blob = title + " " + summary + " " + employer
-
         if is_excluded(title, blob):
             continue
-
-        # Apply URL
-        href = link_el.get("href", "")
-        apply_url = ("https://www.jobbank.gc.ca" + href) if href.startswith("/") else href
 
         jobs.append({
             "title": title,
@@ -261,19 +260,16 @@ def scrape_city(city: str, page_size: int = 50) -> list:
     return jobs
 
 
-def dedupe(jobs: list) -> list:
-    seen = set()
-    out = []
+def dedupe(jobs):
+    seen = set(); out = []
     for j in jobs:
         key = (j["title"].lower(), j["employer"].lower(), j["location"].lower())
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(j)
+        if key in seen: continue
+        seen.add(key); out.append(j)
     return out
 
 
-def sort_key(j: dict):
+def sort_key(j):
     p = (j.get("posted") or "").lower()
     if "today" in p:      return (0, 0)
     if "yesterday" in p:  return (1, 0)
@@ -284,7 +280,7 @@ def sort_key(j: dict):
     return (4, 99)
 
 
-def fetch_all() -> dict:
+def fetch_all():
     jobs = []
     with ThreadPoolExecutor(max_workers=8) as pool:
         futures = {pool.submit(scrape_city, c): c for c in CITIES}
@@ -293,10 +289,8 @@ def fetch_all() -> dict:
                 jobs.extend(fut.result())
             except Exception:
                 continue
-
     jobs = dedupe(jobs)
     jobs.sort(key=sort_key)
-
     now = datetime.now()
     return {
         "jobs": jobs[:80],
@@ -308,11 +302,9 @@ def fetch_all() -> dict:
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        # Check for refresh query
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
         refresh = "refresh" in params
-
         try:
             payload = fetch_all()
         except Exception as e:
