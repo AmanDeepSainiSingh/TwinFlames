@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>twinflames, for Arsh</title>
+<meta name="description" content="A personalized job hunt dashboard for Arsh">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #fdfaf6;
+    --cream: #faf6f1;
+    --navy: #1e2a44;
+    --navy-soft: #4a5573;
+    --muted: #7a8194;
+
+    --pink-50: #fff5f8;
+    --pink-100: #ffe4ec;
+    --pink-200: #ffc4d6;
+    --pink-300: #f7afc4;
+    --pink-400: #ea8aa7;
+    --pink-600: #c95f80;
+    --pink-800: #8c3858;
+
+    --blue-50: #f0f6fc;
+    --blue-100: #e1edf9;
+    --blue-200: #c5dcf0;
+    --blue-300: #a8c5e8;
+    --blue-400: #80a8d2;
+    --blue-600: #5079a8;
+    --blue-800: #2d4f7a;
+  }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    color: var(--navy);
+    background:
+      radial-gradient(circle at 10% 0%, var(--pink-100) 0%, transparent 50%),
+      radial-gradient(circle at 90% 100%, var(--blue-100) 0%, transparent 50%),
+      var(--bg);
+    background-attachment: fixed;
+    min-height: 100vh;
+    line-height: 1.6;
+    overflow-x: hidden;
+    font-weight: 400;
+  }
+
+  /* Floating ambient shapes */
+  .shape {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(40px);
+    opacity: 0.5;
+    animation: drift 14s ease-in-out infinite alternate;
+  }
+  .shape.s1 { width: 220px; height: 220px; background: var(--pink-200); top: 8%; left: -60px; animation-delay: 0s; }
+  .shape.s2 { width: 280px; height: 280px; background: var(--blue-200); bottom: 5%; right: -80px; animation-delay: -4s; }
+  .shape.s3 { width: 150px; height: 150px; background: var(--pink-100); top: 55%; right: 10%; animation-delay: -8s; }
+  @keyframes drift {
+    0%   { transform: translate(0,0) scale(1); }
+    100% { transform: translate(30px,-25px) scale(1.1); }
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 28px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 300;
+    font-size: 12px;
+    letter-spacing: 7px;
+    text-transform: uppercase;
+    color: var(--navy-soft);
+    margin-bottom: 36px;
+  }
+
+  .flame {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    animation: pulse 2.6s ease-in-out infinite;
+  }
+  .flame.pink {
+    background: var(--pink-400);
+    box-shadow: 0 0 14px var(--pink-300), 0 0 28px var(--pink-200);
+  }
+  .flame.blue {
+    background: var(--blue-400);
+    box-shadow: 0 0 14px var(--blue-300), 0 0 28px var(--blue-200);
+    animation-delay: 1.3s;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1);   opacity: 0.85; }
+    50%      { transform: scale(1.5); opacity: 1; }
+  }
+
+  .quote {
+    font-family: 'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 1.32;
+    color: var(--navy);
+    max-width: 540px;
+    margin: 0 auto 28px;
+    letter-spacing: -0.01em;
+  }
+
+  .greeting {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 18px;
+    color: var(--navy-soft);
+    font-style: italic;
+  }
+  .greeting .name {
+    color: var(--pink-600);
+    font-weight: 500;
+    font-style: normal;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── FILTERS ── */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+
+  .pill {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(30, 42, 68, 0.10);
+    background: white;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--navy-soft);
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+  .pill:hover {
+    border-color: var(--pink-300);
+    color: var(--pink-800);
+    transform: translateY(-1px);
+  }
+  .pill.active {
+    background: linear-gradient(135deg, var(--pink-400) 0%, var(--blue-400) 100%);
+    color: white;
+    border-color: transparent;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(234, 138, 167, 0.25);
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--pink-400);
+    animation: dotPulse 2s ease-in-out infinite;
+  }
+  @keyframes dotPulse {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 1; }
+  }
+
+  /* ── JOB CARDS ── */
+  .job-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .job-card {
+    background: white;
+    border: 1px solid rgba(30, 42, 68, 0.06);
+    border-radius: 18px;
+    padding: 22px 26px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.28s ease, box-shadow 0.28s ease, opacity 0.3s ease;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: cardIn 0.5s ease forwards;
+  }
+  @keyframes cardIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .job-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 18px; bottom: 18px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--pink-400);
+  }
+  .job-card.cat-blue::before    { background: var(--blue-400); }
+  .job-card.cat-gray::before    { background: #d4d4d8; }
+  .job-card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 14px 32px rgba(234, 138, 167, 0.10),
+      0 6px 16px rgba(128, 168, 210, 0.08);
+  }
+
+  .job-tag {
+    display: inline-block;
+    padding: 3px 11px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .job-tag.pink { background: var(--pink-50); color: var(--pink-800); }
+  .job-tag.blue { background: var(--blue-50); color: var(--blue-800); }
+  .job-tag.gray { background: #f4f4f5; color: #52525b; }
+
+  .job-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--navy);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .job-employer {
+    font-size: 14px;
+    color: var(--navy-soft);
+    margin-bottom: 14px;
+  }
+
+  .job-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .job-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .job-salary { color: var(--pink-600); font-weight: 500; }
+
+  .job-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .btn-apply {
+    background: linear-gradient(135deg, var(--pink-400) 0%, var(--blue-400) 100%);
+    color: white;
+    border: none;
+    padding: 9px 22px;
+    border-radius: 999px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    letter-spacing: 0.2px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-apply:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(234, 138, 167, 0.30);
+  }
+
+  .btn-save {
+    background: white;
+    border: 1px solid rgba(30, 42, 68, 0.10);
+    color: var(--navy-soft);
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease;
+  }
+  .btn-save:hover {
+    color: var(--pink-600);
+    border-color: var(--pink-300);
+    transform: scale(1.05);
+  }
+  .btn-save.saved {
+    color: var(--pink-600);
+    border-color: var(--pink-300);
+    background: var(--pink-50);
+  }
+
+  /* ── LOADING / EMPTY STATES ── */
+  .state-msg {
+    text-align: center;
+    padding: 60px 20px;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 17px;
+    color: var(--muted);
+  }
+  .state-msg .small {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+    font-style: normal;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  /* ── EXTERNAL ── */
+  .external-section {
+    margin-top: 44px;
+    padding: 30px 28px;
+    background: linear-gradient(135deg, var(--pink-50) 0%, var(--blue-50) 100%);
+    border-radius: 22px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+  .external-title {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--navy-soft);
+    margin-bottom: 18px;
+  }
+  .external-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .ext-btn {
+    background: white;
+    border: 1px solid rgba(30, 42, 68, 0.08);
+    padding: 11px 22px;
+    border-radius: 999px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    color: var(--navy);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .ext-btn:hover {
+    border-color: var(--pink-300);
+    color: var(--pink-800);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(234, 138, 167, 0.10);
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 64px;
+    text-align: center;
+  }
+  .footer-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    color: var(--pink-300);
+    margin-bottom: 22px;
+    font-size: 14px;
+  }
+  .footer-divider::before,
+  .footer-divider::after {
+    content: '';
+    height: 1px;
+    width: 60px;
+    background: linear-gradient(90deg, transparent, var(--pink-200), transparent);
+  }
+  .footer-line {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--navy-soft);
+    margin-bottom: 6px;
+  }
+  .footer-sign {
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .footer-sign .heart {
+    color: var(--pink-400);
+    margin: 0 4px;
+  }
+
+  @media (max-width: 600px) {
+    .quote { font-size: 24px; }
+    .container { padding: 44px 18px 60px; }
+    .brand { font-size: 11px; letter-spacing: 5px; gap: 12px; }
+    .job-card { padding: 20px 22px; }
+    .job-title { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shape s1"></div>
+<div class="shape s2"></div>
+<div class="shape s3"></div>
+
+<div class="container">
+
+  <header class="header">
+    <div class="brand">
+      <span class="flame pink"></span>
+      twinflames
+      <span class="flame blue"></span>
+    </div>
+    <p class="quote">"A good friend is like a four-leaf clover; hard to find and lucky to have."</p>
+    <p class="greeting">hi <span class="name">Arsh</span>, here are today's openings near you</p>
+  </header>
+
+  <div class="filters" id="filters">
+    <button class="pill active" data-filter="all">All</button>
+    <button class="pill" data-filter="healthcare">Healthcare</button>
+    <button class="pill" data-filter="retail-cafe">Retail / Cafe</button>
+    <button class="pill" data-filter="admin">Admin</button>
+    <button class="pill" data-filter="other">Other</button>
+    <button class="pill" data-filter="saved">★ Saved</button>
+  </div>
+
+  <div class="status-bar" id="status">
+    <span class="status-dot"></span>
+    <span id="status-text">loading openings...</span>
+  </div>
+
+  <div class="job-list" id="job-list"></div>
+
+  <div class="external-section">
+    <p class="external-title">want to look further?</p>
+    <div class="external-btns">
+      <a class="ext-btn" id="indeed-btn" href="#" target="_blank" rel="noopener">Open this search on Indeed ↗</a>
+      <a class="ext-btn" id="linkedin-btn" href="#" target="_blank" rel="noopener">Open this search on LinkedIn ↗</a>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-divider">✦</div>
+    <p class="footer-line">tere liye, kuttu, sirf tere liye</p>
+    <p class="footer-sign">from your Greeky <span class="heart">♡</span> always</p>
+  </footer>
+
+</div>
+
+<script>
+  // ─── Mock fallback data (used when /api/jobs isn't available, e.g. local file:// opening) ───
+  const MOCK_JOBS = [
+    {
+      title: "Sandwich Artist", employer: "Subway", category: "retail-cafe",
+      location: "Woodstock, ON", salary: "$17.20/hr", job_type: "Part-time",
+      posted: "Today", url: "https://www.jobbank.gc.ca/jobsearch"
+    },
+    {
+      title: "Medical Office Assistant", employer: "Woodstock Family Medical Centre", category: "healthcare",
+      location: "Woodstock, ON", salary: "$19.50/hr", job_type: "Part-time",
+      posted: "2 days ago", url: "https://www.jobbank.gc.ca/jobsearch"
+    },
+    {
+      title: "Barista, Evening Shift", employer: "Tim Hortons, Dundas Street", category: "retail-cafe",
+      location: "Woodstock, ON", salary: "$17.20/hr", job_type: "Part-time",
+      posted: "Today", url: "https://www.jobbank.gc.ca/jobsearch"
+    },
+    {
+      title: "Pharmacy Assistant", employer: "Shoppers Drug Mart", category: "healthcare",
+      location: "Ingersoll, ON", salary: "$18 to $20/hr", job_type: "Part-time",
+      posted: "4 days ago", url: "https://www.jobbank.gc.ca/jobsearch"
+    },
+    {
+      title: "Cashier", employer: "Walmart Supercentre", category: "retail-cafe",
+      location: "Woodstock, ON", salary: "$17.20/hr", job_type: "Part-time",
+      posted: "1 day ago", url: "https://www.jobbank.gc.ca/jobsearch"
+    },
+    {
+      title: "Receptionist", employer: "Oxford Dental Group", category: "admin",
+      location: "Woodstock, ON", salary: "$17.50/hr", job_type: "Full-time",
+      posted: "5 days ago", url: "https://www.jobbank.gc.ca/jobsearch"
+    },
+    {
+      title: "Sales Associate", employer: "Shoppers Drug Mart", category: "retail-cafe",
+      location: "Tavistock, ON", salary: "$17.20 to $18/hr", job_type: "Part-time",
+      posted: "Today", url: "https://www.jobbank.gc.ca/jobsearch"
+    },
+  ];
+
+  let allJobs = [];
+  let activeFilter = 'all';
+  let savedIds = JSON.parse(localStorage.getItem('twinflames_saved') || '[]');
+
+  const $list = document.getElementById('job-list');
+  const $statusText = document.getElementById('status-text');
+  const $filters = document.getElementById('filters');
+
+  // External smart search URLs
+  document.getElementById('indeed-btn').href =
+    'https://ca.indeed.com/jobs?q=part+time&l=Woodstock%2C+ON&radius=25';
+  document.getElementById('linkedin-btn').href =
+    'https://www.linkedin.com/jobs/search/?keywords=&location=Woodstock%2C%20Ontario%2C%20Canada&distance=25';
+
+  function jobId(j) {
+    return (j.title + '|' + j.employer + '|' + j.location).toLowerCase().replace(/\s+/g, '-');
+  }
+
+  function categoryClass(cat) {
+    if (cat === 'healthcare')   return '';            // default pink accent
+    if (cat === 'retail-cafe')  return 'cat-blue';
+    if (cat === 'admin')        return 'cat-gray';
+    return 'cat-gray';
+  }
+  function tagClass(cat) {
+    if (cat === 'healthcare')   return 'pink';
+    if (cat === 'retail-cafe')  return 'blue';
+    return 'gray';
+  }
+  function categoryLabel(cat) {
+    if (cat === 'healthcare')   return 'Healthcare';
+    if (cat === 'retail-cafe')  return 'Retail / Cafe';
+    if (cat === 'admin')        return 'Admin';
+    return 'Other';
+  }
+
+  function render() {
+    let jobs = allJobs;
+    if (activeFilter === 'saved') {
+      jobs = allJobs.filter(j => savedIds.includes(jobId(j)));
+    } else if (activeFilter !== 'all') {
+      jobs = allJobs.filter(j => j.category === activeFilter);
+    }
+
+    if (jobs.length === 0) {
+      $list.innerHTML = `
+        <div class="state-msg">
+          ${activeFilter === 'saved'
+            ? 'no saved jobs yet, kuttu<span class="small">tap the heart on any job to save it for later</span>'
+            : 'no openings here right now Arsh<span class="small">try another filter, or check back tomorrow ♡</span>'}
+        </div>`;
+      return;
+    }
+
+    $list.innerHTML = jobs.map((j, i) => {
+      const id = jobId(j);
+      const saved = savedIds.includes(id);
+      return `
+        <div class="job-card ${categoryClass(j.category)}" style="animation-delay:${i * 0.05}s">
+          <span class="job-tag ${tagClass(j.category)}">${categoryLabel(j.category)}</span>
+          <h3 class="job-title">${escapeHtml(j.title)}</h3>
+          <p class="job-employer">${escapeHtml(j.employer)}</p>
+          <div class="job-meta">
+            <span class="job-meta-item">📍 ${escapeHtml(j.location)}</span>
+            ${j.salary ? `<span class="job-meta-item job-salary">${escapeHtml(j.salary)}</span>` : ''}
+            ${j.job_type ? `<span class="job-meta-item">${escapeHtml(j.job_type)}</span>` : ''}
+            ${j.posted ? `<span class="job-meta-item">${escapeHtml(j.posted)}</span>` : ''}
+          </div>
+          <div class="job-actions">
+            <a class="btn-apply" href="${j.url}" target="_blank" rel="noopener">View &amp; Apply ↗</a>
+            <button class="btn-save ${saved ? 'saved' : ''}" data-id="${id}" aria-label="${saved ? 'Unsave' : 'Save'}">${saved ? '♥' : '♡'}</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Wire up save buttons
+    document.querySelectorAll('.btn-save').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const id = btn.dataset.id;
+        if (savedIds.includes(id)) {
+          savedIds = savedIds.filter(s => s !== id);
+        } else {
+          savedIds.push(id);
+        }
+        localStorage.setItem('twinflames_saved', JSON.stringify(savedIds));
+        render();
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    );
+  }
+
+  // Filter pills
+  $filters.addEventListener('click', e => {
+    if (e.target.classList.contains('pill')) {
+      document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+      e.target.classList.add('active');
+      activeFilter = e.target.dataset.filter;
+      render();
+    }
+  });
+
+  // Load jobs from API, fall back to mock
+  async function loadJobs() {
+    try {
+      const resp = await fetch('/api/jobs', { cache: 'no-store' });
+      if (!resp.ok) throw new Error('api not ok');
+      const data = await resp.json();
+      if (!data.jobs || data.jobs.length === 0) throw new Error('no jobs returned');
+      allJobs = data.jobs;
+      $statusText.textContent = `${allJobs.length} openings near Woodstock, updated ${data.updated || 'just now'}`;
+    } catch (err) {
+      allJobs = MOCK_JOBS;
+      $statusText.textContent = `${allJobs.length} sample openings (preview mode)`;
+    }
+    render();
+  }
+
+  loadJobs();
+</script>
+</body>
+</html>
