@@ -191,7 +191,7 @@ def find_posting_url(art, title_el):
 def scrape_city(city, page_size=50):
     url = (
         "https://www.jobbank.gc.ca/jobsearch/jobsearch"
-        f"?searchstring=&locationstring={quote(city)}&sort=M&fage=14&page=1"
+        f"?searchstring=&locationstring={quote(city)}&sort=M&fage=7&page=1"
     )
     headers = {
         "User-Agent": (
@@ -269,6 +269,70 @@ def dedupe(jobs):
     return out
 
 
+# ── Expiration check ──
+EXPIRED_MARKERS = [
+    "no longer available",
+    "no longer accepting applications",
+    "this posting has expired",
+    "this job has expired",
+    "this offer is no longer available",
+    "position has been filled",
+    "posting has been removed",
+    "posting closed",
+    "this job posting has been removed",
+]
+
+
+def is_job_active(url, timeout=4):
+    """Quick check whether a Job Bank posting is still live. Returns True on uncertainty."""
+    try:
+        resp = requests.get(
+            url,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                ),
+                "Accept": "text/html",
+                "Accept-Language": "en-CA,en;q=0.9",
+            },
+            timeout=timeout,
+            allow_redirects=True,
+        )
+        if resp.status_code != 200:
+            return False
+        text = resp.text.lower()
+        if any(m in text for m in EXPIRED_MARKERS):
+            return False
+        return True
+    except Exception:
+        # Network hiccup, don't lose the job
+        return True
+
+
+def verify_active(jobs, max_workers=20):
+    """Run all jobs through is_job_active in parallel, drop the expired ones."""
+    if not jobs:
+        return []
+    active = []
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {pool.submit(is_job_active, j["url"]): j for j in jobs}
+        try:
+            for fut in as_completed(futures, timeout=6):
+                try:
+                    if fut.result():
+                        active.append(futures[fut])
+                except Exception:
+                    active.append(futures[fut])
+        except Exception:
+            # Timeout, return what we have plus any pending (assume active)
+            done_ids = {id(f) for f in futures if f.done()}
+            for f, j in futures.items():
+                if id(f) not in done_ids:
+                    active.append(j)
+    return active
+
+
 def sort_key(j):
     p = (j.get("posted") or "").lower()
     if "today" in p:      return (0, 0)
@@ -284,19 +348,30 @@ def fetch_all():
     jobs = []
     with ThreadPoolExecutor(max_workers=8) as pool:
         futures = {pool.submit(scrape_city, c): c for c in CITIES}
-        for fut in as_completed(futures, timeout=9):
+        for fut in as_completed(futures, timeout=5):
             try:
                 jobs.extend(fut.result())
             except Exception:
                 continue
     jobs = dedupe(jobs)
     jobs.sort(key=sort_key)
+
+    # Cap candidates BEFORE verification to keep us under Vercel's 10s timeout
+    candidates = jobs[:40]
+    active = verify_active(candidates)
+    # Preserve sort order
+    active_keys = {(j["title"].lower(), j["employer"].lower(), j["location"].lower()) for j in active}
+    final = [j for j in candidates
+             if (j["title"].lower(), j["employer"].lower(), j["location"].lower()) in active_keys]
+
     now = datetime.now()
     return {
-        "jobs": jobs[:80],
+        "jobs": final,
         "updated_at": now.isoformat(),
         "updated_label": now.strftime("%b %-d, %-I:%M %p"),
         "city_count": len(CITIES),
+        "scraped_count": len(jobs),
+        "verified_active": len(final),
     }
 
 

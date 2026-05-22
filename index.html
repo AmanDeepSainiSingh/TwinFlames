@@ -803,6 +803,18 @@
       }
     }
 
+    if (d.expired) {
+      panel.innerHTML = `
+        <div style="padding:14px 16px;background:#fff3f3;border-radius:12px;border:1px solid #f8d4d4;">
+          <p style="font-size:13.5px;color:#8c3858;font-weight:500;margin-bottom:6px;">⚠ this posting has expired</p>
+          <p style="font-size:13px;color:var(--navy-soft);line-height:1.6;">
+            The role was filled or removed since the search picked it up. Try the Search Job Bank button below to find similar openings, or check back after a refresh.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
     if (d.error || (!d.overview && !d.requirements?.length && !d.tasks?.length && !d.experience?.length)) {
       panel.innerHTML = `
         <p class="loading-row">couldn't pull details from this posting, here are general prep notes:</p>

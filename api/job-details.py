@@ -116,6 +116,19 @@ def extract_overview(soup):
     return ""
 
 
+EXPIRED_MARKERS = [
+    "no longer available",
+    "no longer accepting applications",
+    "this posting has expired",
+    "this job has expired",
+    "this offer is no longer available",
+    "position has been filled",
+    "posting has been removed",
+    "posting closed",
+    "this job posting has been removed",
+]
+
+
 def fetch_details(url):
     if "jobbank.gc.ca" not in url:
         return {"error": "invalid url"}
@@ -125,6 +138,10 @@ def fetch_details(url):
             return {"error": f"http {resp.status_code}"}
     except Exception as e:
         return {"error": str(e)}
+
+    text_lower = resp.text.lower()
+    if any(m in text_lower for m in EXPIRED_MARKERS):
+        return {"expired": True}
 
     soup = BeautifulSoup(resp.text, "html.parser")
     dl = extract_dl_sections(soup)
